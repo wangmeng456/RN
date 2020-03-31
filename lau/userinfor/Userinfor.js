@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { View, Text, StyleSheet, Dimensions, StatusBar, Image, FlatList, ScrollView, AsyncStorage, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { Actions } from 'react-native-router-flux';
-import ImageCropPicker from 'react-native-image-crop-picker';
+import ImagePicker from 'react-native-image-picker';
 
 const { width } = Dimensions.get('window');
 const s = width / 640;
@@ -64,51 +64,64 @@ const contenttwo = [
     }
 ];
 
+const options = {
+    title: '请选择',
+    cancelButtonTitle: '取消',
+    takePhotoButtonTitle: '拍照',
+    chooseFromLibraryButtonTitle: '选择相册',
+    customButtons: [],
+    storageOptions: {
+        skipBackup: true,
+        path: 'images',
+    },
+};
+
 export default class Userinfor extends Component {
-    constructor(){
+    constructor() {
         super();
         this.state = {
-            imageUrl:require('../../assets/header.png')
+            imageUrl: require('../../assets/header.png')
         }
     }
-    componentDidMount(){
-        AsyncStorage.getItem('imgurl').then((res)=>{
-            if(res !== null){
+    componentDidMount() {
+        AsyncStorage.getItem('imgurl').then((res) => {
+            if (res !== null) {
                 this.setState({
-                    imageUrl:JSON.parse(res)
+                    imageUrl: JSON.parse(res)
                 });
             }
         });
     }
     takephoto = () => {
-        ImageCropPicker.openCamera({
-            width: 152 * s,
-            height: 152 * s,
-            cropping: true,
-            cropperCircleOverlay: true,
-        }).then(image => {
-            this.setState({ imageUrl: { uri: image.path } });
-            AsyncStorage.setItem('imgurl', JSON.stringify({ uri: image.path }), () => {
-                console.log('store success')
-            });
-            // console.log(image.path);
-            console.log(this.state.imageUrl);
+        ImagePicker.showImagePicker(options, (response) => {
+            if (response.didCancel) {
+                return;
+            } else if (response.error) {
+                console.log('Error:', response.error);
+            } else if (response.customButton) {
+                console.log('custom:', response.customButton);
+            } else {
+                const source = { uri: response.uri };
+                this.setState({
+                    imageUrl: source,
+                });
+                AsyncStorage.setItem('imgurl', JSON.stringify(source), (err) => { });
+            }
         });
-
     }
     goPublish = (item) => {
         console.log(item.title);
-        if(item.title == '我的发布'){
+        if (item.title == '我的发布') {
             console.log(item.img);
             Actions.publish();
         }
     }
     goOut = () => {
         console.log(1);
-        AsyncStorage.clear()
-        .then(()=>{
-            Actions.login();
-        });
+        AsyncStorage.removeItem('user')
+            .then(() => {
+                Actions.login();
+            });
     }
     render() {
         return (
@@ -118,7 +131,7 @@ export default class Userinfor extends Component {
                     <View style={styles.header}>
                         <View style={{ width: 152 * s, height: 152 * s, borderRadius: 152 * s, borderColor: '#fff', borderWidth: 3, overflow: 'hidden' }}>
                             <TouchableOpacity onPress={() => { this.takephoto() }}>
-                                <Image source={ this.state.imageUrl } style={{ width: 152 * s, height: 152 * s }} />
+                                <Image source={this.state.imageUrl} style={{ width: 152 * s, height: 152 * s }} />
                             </TouchableOpacity>
                         </View>
                         <Text style={{ color: '#fff', fontSize: 19, marginTop: 20 * s }}>BINNU DHILLON</Text>
@@ -150,7 +163,7 @@ export default class Userinfor extends Component {
                         renderItem={({ item }) => (
                             <View style={styles.content}>
                                 <Icon name={item.img} color='#aeaeae' size={36 * s} />
-                                <Text style={{ marginTop: 16 * s, color: '#4f4f4f' }} onPress={()=>this.goPublish(item)}>{item.title}</Text>
+                                <Text style={{ marginTop: 16 * s, color: '#4f4f4f' }} onPress={() => this.goPublish(item)}>{item.title}</Text>
                             </View>
                         )}
                     />
@@ -158,8 +171,8 @@ export default class Userinfor extends Component {
                         <Text style={{ marginLeft: 15 * s, color: '#aeaeae' }}>BINNU DHILLON | 退出</Text>
                     </View>
                     <View style={styles.out}>
-                        <TouchableOpacity onPress={this.goOut} style={{width:width*0.8,height:40,backgroundColor:'red',borderRadius:20,alignItems:'center',justifyContent:'center'}}>
-                            <Text style={{color:'#fff'}}>退出登录</Text>
+                        <TouchableOpacity onPress={this.goOut} style={{ width: width * 0.8, height: 40, backgroundColor: 'red', borderRadius: 20, alignItems: 'center', justifyContent: 'center' }}>
+                            <Text style={{ color: '#fff' }}>退出登录</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -200,6 +213,6 @@ const styles = StyleSheet.create({
     out: {
         alignItems: 'center',
         marginTop: 10,
-        marginBottom:20
+        marginBottom: 20
     }
 })

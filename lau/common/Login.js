@@ -12,12 +12,10 @@ export default class Login extends Component {
       pwd: '',
       lusername: '',
       lpwd: '',
-      isloading: false,
-      flag: false
+      isloading: false
     }
     AsyncStorage.getItem('lusername').then((res) => {
       if (res) {
-        console.log(res);
         this.setState({
           username: res,
           lusername: res
@@ -54,8 +52,7 @@ export default class Login extends Component {
   login = () => {
     if (this.state.username !== '' && this.state.pwd !== '') {
       this.setState({
-        isloading: true,
-        flag: false
+        isloading: true
       });
       myFetch.post('/login', {
         username: this.state.username,
@@ -67,23 +64,25 @@ export default class Login extends Component {
           AsyncStorage.setItem('user', JSON.stringify(res.data))
             .then(() => {
               this.setState({
-                flag: false,
                 isloading: false
               });
               Actions.homePage();
             });
         } else {
           this.setState({
-            flag: true,
             isloading: false
           });
+          ToastAndroid.show('用户名或密码错误',100);
         }
       });
+    }else{
+      ToastAndroid.show('输入为空',100);
     }
   }
   render() {
     return (
       <View style={{ flex: 1, justifyContent: 'center' }}>
+        <View style={{ alignItems: 'center'}}><Text>登录</Text></View>
         <View
           style={{ alignItems: 'center' }}>
           <View
@@ -146,11 +145,6 @@ export default class Login extends Component {
         {
           this.state.isloading
             ? <View style={{ marginTop: 20 }}><Text>正在登录。。。</Text></View>
-            : null
-        }
-        {
-          this.state.flag
-            ? <View style={{ marginTop: 20 }}><Text>用户名或密码错误</Text></View>
             : null
         }
       </View>
